@@ -1,0 +1,52 @@
+version: "2"
+
+networks:
+  guacamole:
+    driver: bridge
+
+services:
+  guacamole-pg:
+    restart: unless-stopped
+    image: sameersbn/postgresql:9.6-2
+    networks:
+      - bridge
+    expose:
+      - 5432
+    # logging: 
+    #   driver: gelf
+    #   options:
+    #     gelf-address: "udp://localhost:5000"
+    #     tag: "guamacole-pg"
+    volumes:
+      - /mnt/guacamole-pg:/var/lib/postgresql
+    environment:
+      - DEBUG=false
+      - DB_USER=guacamole_user
+      - DB_PASS=guacamoleguacamole
+      - DB_NAME=guacamole_db
+      - USERMAP_UID=65534
+      - USERMAP_GID=65533
+      - PG_TRUST_LOCALNET=true
+
+  guacd:
+    image: guacamole/guacd
+    restart: unless-stopped
+    name: guacd
+    networks:
+      - guacamole
+
+  guacamole:
+    image: gucamole:guacamole
+    restart: unless-stopped
+    name: guacamole
+    networks:
+      - guacamole
+    ports:
+      - "10331:8080"
+    depends_on:
+      - guacd:guacd
+      - guacamole-pg:postgres
+    environment:
+      - POSTGRES_DATABASE=guacamole_db
+      - POSTGRES_USER=guacamole_user
+      - POSTGRES_PASSWORD=guacamoleguacamole
